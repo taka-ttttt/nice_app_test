@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# Git
+.git/
+.gitignore
+
+# Docker関連（ビルドコンテキストに含める必要なし）
+docker/
+
+# データファイル（バインドマウントで対応）
+data/
+
+# ドキュメント
+*.md
+
+# エディタ・IDE
+.vscode/
+.idea/
+.cursor/
+
+# 環境設定
+.env
+.python-version
+
