@@ -1,7 +1,7 @@
 """
 LS-DYNA解析アプリケーションのコアドメイン
 
-このパッケージは、プレス成形シミュレーションのためのドメインロジックを提供します。
+プレス成形シミュレーションのためのドメインロジックを提供します。
 
 主要なエンティティ:
 - Tool: 工具（パンチ、ダイ、ブランクホルダー等）
@@ -10,6 +10,11 @@ LS-DYNA解析アプリケーションのコアドメイン
 値オブジェクト:
 - Direction: 6方向の単位ベクトル
 - Directions: 方向プリセット
+
+設定クラス:
+- AnalysisConfig: UI状態管理のためのメイン設定
+- StepConfig: 工程設定（ワーク・工具）
+- MeshInfo: アップロードされたメッシュ情報
 
 サブパッケージ:
 - boundaries: 境界条件（動作、荷重）
@@ -29,6 +34,27 @@ from .workpiece import (
     create_aluminum_workpiece,
 )
 from .common.direction import Direction, Directions
+from .config import (
+    # Enums
+    ProcessType,
+    AnalysisPurpose,
+    MotionType,
+    MotionDirection,
+    FrictionMode,
+    SymmetryPlaneType,
+    # Constants
+    MATERIAL_PRESETS,
+    # Dataclasses
+    MaterialConfig,
+    MeshInfo,
+    WorkpieceConfig,
+    ToolConfig,
+    FrictionConfig,
+    SymmetryPlane,
+    ConstraintConfig,
+    StepConfig,
+    AnalysisConfig,
+)
 
 __all__ = [
     # エンティティ
@@ -45,5 +71,24 @@ __all__ = [
     "create_steel_workpiece",
     "create_stainless_workpiece",
     "create_aluminum_workpiece",
+    # 設定用Enum
+    "ProcessType",
+    "AnalysisPurpose",
+    "MotionType",
+    "MotionDirection",
+    "FrictionMode",
+    "SymmetryPlaneType",
+    # 設定用定数
+    "MATERIAL_PRESETS",
+    # 設定用データクラス
+    "MaterialConfig",
+    "MeshInfo",
+    "WorkpieceConfig",
+    "ToolConfig",
+    "FrictionConfig",
+    "SymmetryPlane",
+    "ConstraintConfig",
+    "StepConfig",
+    "AnalysisConfig",
 ]
 
