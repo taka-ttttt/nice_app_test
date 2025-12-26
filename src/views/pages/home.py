@@ -10,7 +10,7 @@
 """
 
 from nicegui import ui, events
-from typing import Optional, Dict
+from typing import Optional
 
 from core.config import (
     AnalysisConfig,
@@ -18,9 +18,9 @@ from core.config import (
     AnalysisPurpose,
     FrictionMode,
     MeshInfo,
-    MATERIAL_PRESETS,
 )
 from core.kfile_parser import parse_kfile_from_bytes
+from views.components import render_step_manager
 
 
 # =============================================================================
@@ -222,87 +222,17 @@ def render_mesh_management() -> None:
 def render_step_parts_setting() -> None:
     """3. 工程・パート設定セクションを描画（サイドバー方式）"""
     state = get_state()
-    
-    with ui.card().classes('w-full'):
-        ui.label('3. 工程・パート設定').classes('text-lg font-bold mb-4')
-        
-        # サイドバー方式のレイアウト
-        with ui.splitter(value=25).classes('w-full h-96') as splitter:
-            
-            # 左側: 工程一覧（サイドバー）
-            with splitter.before:
-                with ui.column().classes('w-full h-full p-2 bg-gray-50'):
-                    ui.label('工程一覧').classes('font-medium text-sm text-gray-600 mb-2')
-                    
-                    # 工程リスト
-                    step_list_container = ui.column().classes('w-full gap-1')
-                    
-                    def render_step_list():
-                        """工程リストを更新"""
-                        step_list_container.clear()
-                        with step_list_container:
-                            for i, step in enumerate(state.steps):
-                                is_selected = i == 0  # 最初の工程を選択状態に
-                                btn_class = 'w-full' + (' bg-blue-100' if is_selected else '')
-                                ui.button(
-                                    f'{step.order}. {step.name}',
-                                    on_click=lambda s=step: select_step(s.id),
-                                ).props('flat align=left').classes(btn_class)
-                    
-                    render_step_list()
-                    
-                    ui.separator().classes('my-2')
-                    
-                    # 工程追加ボタン
-                    ui.button(
-                        '工程を追加',
-                        icon='add',
-                        on_click=lambda: add_step_and_refresh(),
-                    ).props('flat dense').classes('w-full')
-                    
-                    ui.separator().classes('my-2')
-                    
-                    # 順序変更・複製・削除ボタン
-                    with ui.row().classes('w-full gap-1'):
-                        ui.button(icon='arrow_upward').props('flat dense').tooltip('上へ移動')
-                        ui.button(icon='arrow_downward').props('flat dense').tooltip('下へ移動')
-                    with ui.row().classes('w-full gap-1'):
-                        ui.button(icon='content_copy').props('flat dense').tooltip('複製')
-                        ui.button(icon='delete').props('flat dense color=negative').tooltip('削除')
-            
-            # 右側: 選択した工程の詳細
-            with splitter.after:
-                with ui.column().classes('w-full h-full p-4'):
-                    # 工程詳細（プレースホルダー）
-                    if state.steps:
-                        current_step = state.steps[0]
-                        ui.label(f'工程: {current_step.name}').classes('text-lg font-medium mb-4')
-                        
-                        # ワーク設定（プレースホルダー）
-                        with ui.expansion('ワーク設定', icon='build').classes('w-full'):
-                            ui.label('Step 4で実装予定').classes('text-gray-400 italic')
-                        
-                        # 工具設定（プレースホルダー）
-                        with ui.expansion('工具設定', icon='precision_manufacturing').classes('w-full'):
-                            ui.label('Step 4で実装予定').classes('text-gray-400 italic')
-                    else:
-                        ui.label('工程がありません').classes('text-gray-400 italic')
-    
-    def select_step(step_id: str):
-        """工程を選択"""
-        # Step 4で実装
-        ui.notify(f'工程を選択: {step_id}')
-    
-    def add_step_and_refresh():
-        """工程を追加してリストを更新"""
-        state.add_step()
-        ui.notify('工程を追加しました')
-        # 実際のリフレッシュはStep 4で実装
+    render_step_manager(state)
 
 
 def render_global_settings() -> None:
     """4. 全体設定セクションを描画"""
     state = get_state()
+    
+    def update_friction_mode(mode: FrictionMode):
+        """摩擦モードを更新"""
+        state.friction.mode = mode
+        state.friction.apply_preset()
     
     with ui.card().classes('w-full'):
         ui.label('4. 全体設定').classes('text-lg font-bold mb-4')
@@ -333,16 +263,16 @@ def render_global_settings() -> None:
                 ui.label('拘束条件').classes('font-medium')
                 ui.button('拘束条件を追加', icon='add').props('flat')
                 ui.label('Step 5で詳細実装').classes('text-gray-400 italic text-sm')
-    
-    def update_friction_mode(mode: FrictionMode):
-        """摩擦モードを更新"""
-        state.friction.mode = mode
-        state.friction.apply_preset()
 
 
 def render_export() -> None:
     """5. エクスポートセクションを描画"""
     state = get_state()
+    
+    def export_config():
+        """設定をエクスポート"""
+        # Step 5で実装
+        ui.notify(f'エクスポート: {state.get_export_filename()}', type='info')
     
     with ui.card().classes('w-full'):
         ui.label('5. エクスポート').classes('text-lg font-bold mb-4')
@@ -362,11 +292,6 @@ def render_export() -> None:
                 icon='download',
                 on_click=lambda: export_config(),
             ).props('color=primary')
-    
-    def export_config():
-        """設定をエクスポート"""
-        # Step 5で実装
-        ui.notify(f'エクスポート: {state.get_export_filename()}', type='info')
 
 
 # =============================================================================
