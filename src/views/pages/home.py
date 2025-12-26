@@ -16,11 +16,10 @@ from core.config import (
     AnalysisConfig,
     ProcessType,
     AnalysisPurpose,
-    FrictionMode,
     MeshInfo,
 )
 from core.kfile_parser import parse_kfile_from_bytes
-from views.components import render_step_manager
+from views.components import render_step_manager, render_global_settings, render_export_section
 
 
 # =============================================================================
@@ -225,73 +224,16 @@ def render_step_parts_setting() -> None:
     render_step_manager(state)
 
 
-def render_global_settings() -> None:
+def render_global_settings_section() -> None:
     """4. 全体設定セクションを描画"""
     state = get_state()
-    
-    def update_friction_mode(mode: FrictionMode):
-        """摩擦モードを更新"""
-        state.friction.mode = mode
-        state.friction.apply_preset()
-    
-    with ui.card().classes('w-full'):
-        ui.label('4. 全体設定').classes('text-lg font-bold mb-4')
-        
-        with ui.row().classes('w-full gap-8 flex-wrap'):
-            # 摩擦係数
-            with ui.column().classes('gap-2'):
-                ui.label('摩擦係数').classes('font-medium')
-                friction_options = {
-                    FrictionMode.OIL: '油あり (静摩擦: 0.10, 動摩擦: 0.05)',
-                    FrictionMode.DRY: '油なし (静摩擦: 0.15, 動摩擦: 0.10)',
-                    FrictionMode.MANUAL: 'マニュアル入力',
-                }
-                ui.radio(
-                    options=friction_options,
-                    value=state.friction.mode,
-                    on_change=lambda e: update_friction_mode(e.value),
-                )
-            
-            # 対称面（プレースホルダー）
-            with ui.column().classes('gap-2'):
-                ui.label('対称面').classes('font-medium')
-                ui.checkbox('対称面を使用')
-                ui.label('Step 5で詳細実装').classes('text-gray-400 italic text-sm')
-            
-            # 拘束条件（プレースホルダー）
-            with ui.column().classes('gap-2'):
-                ui.label('拘束条件').classes('font-medium')
-                ui.button('拘束条件を追加', icon='add').props('flat')
-                ui.label('Step 5で詳細実装').classes('text-gray-400 italic text-sm')
+    render_global_settings(state)
 
 
 def render_export() -> None:
     """5. エクスポートセクションを描画"""
     state = get_state()
-    
-    def export_config():
-        """設定をエクスポート"""
-        # Step 5で実装
-        ui.notify(f'エクスポート: {state.get_export_filename()}', type='info')
-    
-    with ui.card().classes('w-full'):
-        ui.label('5. エクスポート').classes('text-lg font-bold mb-4')
-        
-        with ui.row().classes('w-full gap-4 items-end'):
-            # ファイル名
-            ui.input(
-                label='出力ファイル名',
-                value=state.output_filename or state.project_name,
-                placeholder=state.project_name,
-                on_change=lambda e: setattr(state, 'output_filename', e.value),
-            ).classes('w-64')
-            
-            # エクスポートボタン
-            ui.button(
-                'エクスポート',
-                icon='download',
-                on_click=lambda: export_config(),
-            ).props('color=primary')
+    render_export_section(state)
 
 
 # =============================================================================
@@ -309,5 +251,5 @@ def render() -> None:
         render_analysis_overview()
         render_mesh_management()
         render_step_parts_setting()
-        render_global_settings()
+        render_global_settings_section()
         render_export()
