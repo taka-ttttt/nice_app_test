@@ -5,11 +5,10 @@ ansys-dyna-coreのDeckクラスを活用して、
 .kファイルからパート情報、要素数、節点数を抽出します。
 """
 
-import tempfile
 import os
+import tempfile
 from dataclasses import dataclass, field
-from typing import List, Set, Dict, Tuple
-import pandas as pd
+
 from ansys.dyna.core import Deck
 
 
@@ -21,10 +20,10 @@ class ParsedPart:
     element_count: int
     node_count: int
     element_type: str  # "SHELL", "SOLID", etc.
-    node_ids: Set[int] = field(default_factory=set)
+    node_ids: set[int] = field(default_factory=set)
 
 
-def parse_kfile(file_path: str) -> Tuple[List[ParsedPart], bool]:
+def parse_kfile(file_path: str) -> tuple[list[ParsedPart], bool]:
     """
     kファイルを解析してパート情報を抽出
     
@@ -46,7 +45,7 @@ def parse_kfile(file_path: str) -> Tuple[List[ParsedPart], bool]:
             continue
     
     # パート名のマッピングを作成（PARTキーワードから）
-    part_names: Dict[int, str] = {}
+    part_names: dict[int, str] = {}
     for part_kwd in deck.get_kwds_by_type("PART"):
         try:
             pid = int(part_kwd.pid)
@@ -60,7 +59,7 @@ def parse_kfile(file_path: str) -> Tuple[List[ParsedPart], bool]:
             continue
     
     # パート情報を格納
-    part_data: Dict[int, Dict] = {}
+    part_data: dict[int, dict] = {}
     
     # ELEMENT_SHELL を処理
     _process_element_dataframe(
@@ -96,8 +95,8 @@ def parse_kfile(file_path: str) -> Tuple[List[ParsedPart], bool]:
 def _process_element_dataframe(
     deck: Deck,
     element_subtype: str,
-    part_data: Dict[int, Dict],
-    part_names: Dict[int, str],
+    part_data: dict[int, dict],
+    part_names: dict[int, str],
 ) -> None:
     """
     要素キーワードのDataFrameを処理してパート情報を抽出
@@ -144,12 +143,12 @@ def _process_element_dataframe(
                         "node_ids": node_ids,
                     }
         
-        except (AttributeError, ValueError, TypeError) as e:
+        except (AttributeError, ValueError, TypeError):
             # エラーが発生した場合はスキップ
             continue
 
 
-def _check_shared_nodes(part_data: Dict[int, Dict]) -> bool:
+def _check_shared_nodes(part_data: dict[int, dict]) -> bool:
     """複数パート間で節点が共有されているかチェック"""
     part_list = list(part_data.items())
     
@@ -161,7 +160,7 @@ def _check_shared_nodes(part_data: Dict[int, Dict]) -> bool:
     return False
 
 
-def parse_kfile_from_bytes(data: bytes, file_name: str = "") -> Tuple[List[ParsedPart], bool]:
+def parse_kfile_from_bytes(data: bytes, file_name: str = "") -> tuple[list[ParsedPart], bool]:
     """
     バイトデータからkファイルを解析
     

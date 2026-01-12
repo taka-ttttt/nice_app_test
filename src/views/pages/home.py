@@ -9,17 +9,21 @@
 5. エクスポート
 """
 
-from nicegui import ui, events
-from typing import Optional
+
+from nicegui import events, ui
 
 from core.config import (
     AnalysisConfig,
-    ProcessType,
     AnalysisPurpose,
     MeshInfo,
+    ProcessType,
 )
 from core.kfile_parser import parse_kfile_from_bytes
-from views.components import render_step_manager, render_global_settings, render_export_section
+from views.components import (
+    render_export_section,
+    render_global_settings,
+    render_step_manager,
+)
 
 
 # =============================================================================
@@ -27,7 +31,7 @@ from views.components import render_step_manager, render_global_settings, render
 # =============================================================================
 
 # グローバル状態（シングルトン）
-app_state: Optional[AnalysisConfig] = None
+app_state: AnalysisConfig | None = None
 
 
 def get_state() -> AnalysisConfig:

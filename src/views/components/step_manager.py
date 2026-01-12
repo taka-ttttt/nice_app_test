@@ -4,28 +4,29 @@
 工程一覧（サイドバー）と工程詳細パネルを提供します。
 """
 
+
 from nicegui import ui
-from typing import Optional, Callable
 
 from core.config import (
     AnalysisConfig,
-    StepConfig,
     ProcessType,
+    StepConfig,
 )
-from .workpiece_card import render_workpiece_card
+
 from .tool_card import render_tool_card
+from .workpiece_card import render_workpiece_card
 
 
 # 選択中の工程ID（モジュールレベル状態）
-_selected_step_id: Optional[str] = None
+_selected_step_id: str | None = None
 
 
-def get_selected_step_id() -> Optional[str]:
+def get_selected_step_id() -> str | None:
     """選択中の工程IDを取得"""
     return _selected_step_id
 
 
-def set_selected_step_id(step_id: Optional[str]) -> None:
+def set_selected_step_id(step_id: str | None) -> None:
     """選択中の工程IDを設定"""
     global _selected_step_id
     _selected_step_id = step_id
@@ -48,7 +49,7 @@ def render_step_manager(state: AnalysisConfig) -> None:
     step_list_container = None
     step_detail_container = None
     
-    def get_selected_step() -> Optional[StepConfig]:
+    def get_selected_step() -> StepConfig | None:
         """選択中の工程を取得"""
         if _selected_step_id:
             return state.get_step_by_id(_selected_step_id)

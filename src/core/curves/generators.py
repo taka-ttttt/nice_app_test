@@ -1,15 +1,15 @@
 """カーブ生成関数"""
+
 import numpy as np
 import pandas as pd
 from ansys.dyna.core import keywords as kwd
-from typing import Tuple
 
 
 def generate_half_cosine_curve(
     ramp_time: float,
     hold_time: float = 10.0,
     num_pts: int = 100
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     ハーフコサイン波形の時間と値の配列を生成する共通関数
     
@@ -36,7 +36,7 @@ def generate_half_cosine_derivative_curve(
     ramp_time: float,
     hold_time: float = 10.0,
     num_pts: int = 100
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     ハーフコサイン波形の微分カーブの時間と値の配列を生成する共通関数
     
@@ -64,7 +64,7 @@ def generate_full_cosine_curve(
     cycle_time: float,
     hold_time: float = 10.0,
     num_pts: int = 100
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     フルコサイン波形（往復動作）の時間と値の配列を生成する共通関数
     0→1→0 の往復動作を表現
@@ -92,7 +92,7 @@ def generate_full_cosine_derivative_curve(
     cycle_time: float,
     hold_time: float = 10.0,
     num_pts: int = 100
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     フルコサイン波形の微分カーブの時間と値の配列を生成する共通関数
     

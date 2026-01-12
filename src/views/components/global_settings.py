@@ -4,16 +4,15 @@
 摩擦係数、対称面、拘束条件の設定UIを提供します。
 """
 
+
 from nicegui import ui
-from typing import Callable
 
 from core.config import (
     AnalysisConfig,
-    FrictionConfig,
+    ConstraintConfig,
     FrictionMode,
     SymmetryPlane,
     SymmetryPlaneType,
-    ConstraintConfig,
 )
 
 

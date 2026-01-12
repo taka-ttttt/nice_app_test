@@ -1,6 +1,7 @@
 """ワーク（被加工材）エンティティ - プレス成形における被加工材を表現"""
-from dataclasses import dataclass, field
-from typing import Optional, Dict, Any
+from dataclasses import dataclass
+from typing import Any
+
 from ansys.dyna.core import keywords as kwd
 
 
@@ -12,9 +13,9 @@ class MaterialProperties:
     poisson_ratio: float        # ポアソン比
     yield_stress: float         # 降伏応力 (MPa)
     tangent_modulus: float = 0.0  # 接線係数 (MPa)
-    stress_strain_curve_id: Optional[int] = None  # 応力-ひずみカーブID
+    stress_strain_curve_id: int | None = None  # 応力-ひずみカーブID
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """辞書形式に変換"""
         return {
             "density": self.density,
@@ -40,16 +41,16 @@ class Workpiece:
     name: str = "workpiece"      # ワーク名
     
     # 形状情報
-    mesh_file: Optional[str] = None  # メッシュファイルパス
-    thickness: Optional[float] = None  # 板厚 (mm)
+    mesh_file: str | None = None  # メッシュファイルパス
+    thickness: float | None = None  # 板厚 (mm)
     
     # 材料・セクション
-    material_id: Optional[int] = None
-    section_id: Optional[int] = None
+    material_id: int | None = None
+    section_id: int | None = None
     material_type: str = "mat024"  # 材料モデルタイプ
     
     # 材料特性
-    material_properties: Optional[MaterialProperties] = None
+    material_properties: MaterialProperties | None = None
     
     def set_material_properties(
         self,
@@ -58,7 +59,7 @@ class Workpiece:
         poisson_ratio: float,
         yield_stress: float,
         tangent_modulus: float = 0.0,
-        stress_strain_curve_id: Optional[int] = None
+        stress_strain_curve_id: int | None = None
     ) -> "Workpiece":
         """
         材料特性を設定
@@ -213,7 +214,7 @@ class Workpiece:
         section.title = f"{self.name}_section"
         return section
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         ワーク情報を辞書形式で取得
         

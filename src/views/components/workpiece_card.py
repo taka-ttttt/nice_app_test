@@ -4,19 +4,20 @@
 ワーク（被加工材）の設定カードを描画します。
 """
 
+from collections.abc import Callable
+
 from nicegui import ui
-from typing import Callable, List
 
 from core.config import (
-    WorkpieceConfig,
-    MeshInfo,
     MATERIAL_PRESETS,
+    MeshInfo,
+    WorkpieceConfig,
 )
 
 
 def render_workpiece_card(
     workpiece: WorkpieceConfig,
-    uploaded_meshes: List[MeshInfo],
+    uploaded_meshes: list[MeshInfo],
     on_delete: Callable[[], None],
     can_delete: bool = True,
 ) -> None:

@@ -1,11 +1,13 @@
 """LS-DYNAデッキファイル生成機能"""
 import os
 from datetime import datetime
-from ansys.dyna.core import Deck, keywords as kwd
-from typing import Dict, List, Any
+from typing import Any
+
+from ansys.dyna.core import Deck
+from ansys.dyna.core import keywords as kwd
 
 
-def reset_keywords(all_keywords: List[Any]) -> None:
+def reset_keywords(all_keywords: list[Any]) -> None:
     """キーワードのdeck参照をリセット
     
     Args:
@@ -19,13 +21,13 @@ def reset_keywords(all_keywords: List[Any]) -> None:
 
 
 def create_comprehensive_deck_files(
-    keyword_groups: Dict[str, List[Any]], 
+    keyword_groups: dict[str, list[Any]], 
     project_name: str = "comprehensive_analysis", 
     add_timestamp: bool = False,
     base_dir: str = "./projects",
     reset_before_create: bool = True,
     create_springback: bool = True
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """メイン解析とスプリングバック解析の両方を生成
     
     Args:
@@ -107,8 +109,8 @@ def create_comprehensive_deck_files(
 
 def create_press_analysis_project(
     project_dir: str,
-    keyword_groups: Dict[str, List[Any]]
-) -> Dict[str, Any]:
+    keyword_groups: dict[str, list[Any]]
+) -> dict[str, Any]:
     """成形解析プロジェクトを作成
     
     Args:
@@ -183,8 +185,8 @@ def create_press_analysis_project(
 
 def create_springback_analysis_project(
     project_dir: str,
-    keyword_groups: Dict[str, List[Any]]
-) -> Dict[str, Any]:
+    keyword_groups: dict[str, list[Any]]
+) -> dict[str, Any]:
     """スプリングバック解析プロジェクトを作成
     
     Args:
@@ -252,9 +254,9 @@ def create_springback_analysis_project(
 
 def create_deck_project(
     project_dir: str,
-    decks_info: List[Dict[str, Any]],
+    decks_info: list[dict[str, Any]],
     main_title: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """共通のDeckプロジェクト作成関数
     
     Args:

@@ -1,15 +1,15 @@
 """工具エンティティ - プレス成形における工具を表現"""
 from dataclasses import dataclass, field
-from typing import Optional, List, Dict, Any, Union
+from typing import Any
 
 from .boundaries.enums import ConditionType, MotionControlType, StrokeMode
 from .boundaries.motion import (
-    ToolConditionConfig,
-    PositionLimits,
-    VelocityLimitConfig,
     FollowingConfig,
+    PositionLimits,
+    ToolConditionConfig,
+    VelocityLimitConfig,
 )
-from .common.direction import Direction, Directions
+from .common.direction import Direction
 from .materials.rigid import make_rigid_material
 
 
@@ -28,22 +28,22 @@ class Tool:
     tool_type: str                   # 工具タイプ（"punch", "die", "holder" など）
     
     # 形状・メッシュ
-    mesh_file: Optional[str] = None  # メッシュファイルパス
+    mesh_file: str | None = None  # メッシュファイルパス
     
     # 材料・セクション
-    material_id: Optional[int] = None
-    section_id: Optional[int] = None
+    material_id: int | None = None
+    section_id: int | None = None
     material_constraint: str = "fixed"  # 剛体材料の制約条件
     
     # 動作設定
-    motion_config: Optional[ToolConditionConfig] = None
+    motion_config: ToolConditionConfig | None = None
     
     # 接触対象（Part ID のリスト）
-    contact_targets: List[int] = field(default_factory=list)
+    contact_targets: list[int] = field(default_factory=list)
     
     def set_displacement_motion(
         self,
-        direction: Union[str, Direction],
+        direction: str | Direction,
         displacement: float,
         motion_time: float,
         stroke_mode: StrokeMode = StrokeMode.FORWARD_ONLY
@@ -81,7 +81,7 @@ class Tool:
     
     def set_velocity_motion(
         self,
-        direction: Union[str, Direction],
+        direction: str | Direction,
         velocity: float,
         motion_time: float,
         stroke_mode: StrokeMode = StrokeMode.FORWARD_ONLY
@@ -112,10 +112,10 @@ class Tool:
     
     def set_load(
         self,
-        direction: Union[str, Direction],
+        direction: str | Direction,
         load_amount: float,
-        position_limits: Optional[PositionLimits] = None,
-        velocity_limit_config: Optional[VelocityLimitConfig] = None
+        position_limits: PositionLimits | None = None,
+        velocity_limit_config: VelocityLimitConfig | None = None
     ) -> "Tool":
         """
         荷重制御を設定（ブランクホルダー等向け）
@@ -144,7 +144,7 @@ class Tool:
         self,
         leader_tool: "Tool",
         threshold_displacement: float,
-        direction: Union[str, Direction]
+        direction: str | Direction
     ) -> "Tool":
         """
         追従動作を設定（リーダー工具に追従）
@@ -198,7 +198,7 @@ class Tool:
             constraint=self.material_constraint
         )
     
-    def get_condition_config(self) -> Optional[ToolConditionConfig]:
+    def get_condition_config(self) -> ToolConditionConfig | None:
         """
         工具の条件設定を取得
         
@@ -207,7 +207,7 @@ class Tool:
         """
         return self.motion_config
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         工具情報を辞書形式で取得
         

@@ -1,22 +1,23 @@
 """境界条件（動作・荷重）の設定と生成"""
+from dataclasses import dataclass
+from typing import Any
+
 import numpy as np
 import pandas as pd
 from ansys.dyna.core import keywords as kwd
-from typing import Optional, Dict, Any, List, Union
-from dataclasses import dataclass
 
-from .enums import (
-    ConditionType,
-    MotionControlType,
-    StrokeMode,
-    FollowMode,
-)
-from ..common.direction import Direction, Axis
+from ..common.direction import Axis, Direction
 from ..curves.generators import (
+    create_constant_curve,
     create_preload_curve,
     create_stroke_curve,
     create_threshold_following_curve,
-    create_constant_curve,
+)
+from .enums import (
+    ConditionType,
+    FollowMode,
+    MotionControlType,
+    StrokeMode,
 )
 
 
@@ -26,7 +27,7 @@ class PositionLimits:
     max_position: float  # 最大位置
     min_position: float  # 最小位置
     
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> dict[str, float]:
         """辞書形式に変換"""
         return {"max": self.max_position, "min": self.min_position}
 
@@ -52,25 +53,25 @@ class ToolConditionConfig:
     # 基本設定
     condition_type: ConditionType
     part_id: int  # pidよりも明確
-    direction: Union[str, Direction]  # Direction オブジェクトまたは文字列（'+z', '-z'など）
+    direction: str | Direction  # Direction オブジェクトまたは文字列（'+z', '-z'など）
     name: str  # titleよりも簡潔
     
     # 強制動作用設定
-    motion_control_type: Optional[MotionControlType] = None
-    displacement_amount: Optional[float] = None  # より明確
-    velocity_amount: Optional[float] = None  # より明確
-    motion_time: Optional[float] = None  # ramp_timeから変更
+    motion_control_type: MotionControlType | None = None
+    displacement_amount: float | None = None  # より明確
+    velocity_amount: float | None = None  # より明確
+    motion_time: float | None = None  # ramp_timeから変更
     stroke_mode: StrokeMode = StrokeMode.FORWARD_ONLY
     
     # 追従設定（強制動作時のオプション）
-    following_config: Optional[FollowingConfig] = None
+    following_config: FollowingConfig | None = None
     
     # 荷重付与用設定
-    load_amount: Optional[float] = None  # より明確
+    load_amount: float | None = None  # より明確
     
     # 制限条件（オプション）
-    position_limits: Optional[PositionLimits] = None
-    velocity_limit_config: Optional[VelocityLimitConfig] = None
+    position_limits: PositionLimits | None = None
+    velocity_limit_config: VelocityLimitConfig | None = None
     
     # カーブID設定
     base_curve_id: int = 9000  # より明確
@@ -79,7 +80,7 @@ class ToolConditionConfig:
 class ToolConditionManager:
     """工具条件設定の統一管理クラス"""
     
-    def __init__(self, global_config: Dict[str, Any]):
+    def __init__(self, global_config: dict[str, Any]):
         """
         Parameters:
         global_config: 全体設定（motion_timeやhold_timeなど）
@@ -132,7 +133,7 @@ class ToolConditionManager:
         
         return abs(max_velocity) * velocity_config.limit_multiplier
     
-    def create_tool_condition(self, config: ToolConditionConfig) -> Dict[str, Any]:
+    def create_tool_condition(self, config: ToolConditionConfig) -> dict[str, Any]:
         """
         工具条件を作成する統一メソッド
         
@@ -146,7 +147,7 @@ class ToolConditionManager:
         else:
             raise ValueError(f"未対応の条件タイプ: {config.condition_type}")
     
-    def _create_forced_motion_condition(self, config: ToolConditionConfig) -> Dict[str, Any]:
+    def _create_forced_motion_condition(self, config: ToolConditionConfig) -> dict[str, Any]:
         """強制動作条件を作成"""
         result = {"curves": {}, "conditions": {}}
         
@@ -164,7 +165,7 @@ class ToolConditionManager:
         
         return result
     
-    def _create_displacement_control(self, config: ToolConditionConfig) -> Dict[str, Any]:
+    def _create_displacement_control(self, config: ToolConditionConfig) -> dict[str, Any]:
         """変位制御条件を作成"""
         curve_id = self._get_next_curve_id()
         
@@ -196,7 +197,7 @@ class ToolConditionManager:
             "conditions": {"motion": condition}
         }
     
-    def _create_velocity_control(self, config: ToolConditionConfig) -> Dict[str, Any]:
+    def _create_velocity_control(self, config: ToolConditionConfig) -> dict[str, Any]:
         """速度制御条件を作成"""
         curve_id = self._get_next_curve_id()
         
@@ -228,7 +229,7 @@ class ToolConditionManager:
             "conditions": {"motion": condition}
         }
     
-    def _create_load_application_condition(self, config: ToolConditionConfig) -> Dict[str, Any]:
+    def _create_load_application_condition(self, config: ToolConditionConfig) -> dict[str, Any]:
         """荷重付与条件を作成"""
         result = {"curves": {}, "conditions": {}}
         
@@ -311,7 +312,7 @@ class ToolConditionManager:
         
         return curves, limit_condition
 
-    def _create_following_motion_condition(self, config: ToolConditionConfig) -> Dict[str, Any]:
+    def _create_following_motion_condition(self, config: ToolConditionConfig) -> dict[str, Any]:
         """追従動作条件を作成"""
         result = {"curves": {}, "conditions": {}}
         following = config.following_config
@@ -413,7 +414,7 @@ class ToolConditionManager:
         curve_df = pd.DataFrame({"a1": t_new, "o1": v_new})
         return kwd.DefineCurve(lcid=lcid, sidr=0, curves=curve_df, title=title)
 
-    def create_tool_set_conditions(self, tool_configs: List[ToolConditionConfig]) -> Dict[str, Any]:
+    def create_tool_set_conditions(self, tool_configs: list[ToolConditionConfig]) -> dict[str, Any]:
         """
         複数工具の条件を一括作成（追従関係を考慮した順序で処理）
         """
@@ -428,7 +429,7 @@ class ToolConditionManager:
         
         return results
     
-    def _sort_configs_by_dependency(self, configs: List[ToolConditionConfig]) -> List[ToolConditionConfig]:
+    def _sort_configs_by_dependency(self, configs: list[ToolConditionConfig]) -> list[ToolConditionConfig]:
         """追従関係を考慮して設定をソート"""
         leaders = []
         followers = []
@@ -444,14 +445,14 @@ class ToolConditionManager:
         return leaders + followers
 
 
-def _resolve_direction(dof: Union[str, Direction]) -> Direction:
+def _resolve_direction(dof: str | Direction) -> Direction:
     """方向を Direction オブジェクトに変換"""
     if isinstance(dof, Direction):
         return dof
     return Direction.from_string(dof)
 
 
-def _resolve_axis(limit_direction: Union[str, Axis]) -> Axis:
+def _resolve_axis(limit_direction: str | Axis) -> Axis:
     """軸を Axis オブジェクトに変換"""
     if isinstance(limit_direction, Axis):
         return limit_direction
@@ -462,7 +463,7 @@ def create_rigid_preload(
     pid: int,
     lcid: int,
     sf: float,
-    dof: Union[str, Direction],
+    dof: str | Direction,
     title: str = "Rigid preload"
 ) -> kwd.LoadRigidBody:
     """
@@ -492,7 +493,7 @@ def create_rigid_preload(
 def create_stroke_condition(
     pid: int,
     lcid: int,
-    dof: Union[str, Direction],
+    dof: str | Direction,
     sf: float = 1.0,
     vad: int = 2,
     title: str = "Stroke condition"
@@ -531,7 +532,7 @@ def create_stroke_condition(
 
 def create_limit_condition(
     pid: int,
-    limit_direction: Union[str, Axis],
+    limit_direction: str | Axis,
     lcid_max: int,
     lcid_min: int,
     lcid_velocity_limit: int = None,

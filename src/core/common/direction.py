@@ -1,7 +1,7 @@
 """方向（単位ベクトル）を表す値オブジェクト"""
-from enum import Enum
 from dataclasses import dataclass
-from typing import Tuple, TYPE_CHECKING
+from enum import Enum
+
 import numpy as np
 
 
@@ -85,7 +85,7 @@ class Direction:
         return self.sign.multiplier
     
     @property
-    def unit_vector(self) -> Tuple[float, float, float]:
+    def unit_vector(self) -> tuple[float, float, float]:
         """
         単位ベクトルをタプルで取得
         
@@ -207,7 +207,7 @@ class Directions(metaclass=_DirectionsMeta):
     NEGATIVE_Z: Direction = Direction(Axis.Z, Sign.NEGATIVE)
     
     @classmethod
-    def all(cls) -> Tuple[Direction, ...]:
+    def all(cls) -> tuple[Direction, ...]:
         """全6方向のタプルを取得"""
         return (
             cls.POSITIVE_X, cls.NEGATIVE_X,

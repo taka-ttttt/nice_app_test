@@ -4,20 +4,21 @@
 工具の設定カードを描画します。
 """
 
+from collections.abc import Callable
+
 from nicegui import ui
-from typing import Callable, List
 
 from core.config import (
-    ToolConfig,
     MeshInfo,
-    MotionType,
     MotionDirection,
+    MotionType,
+    ToolConfig,
 )
 
 
 def render_tool_card(
     tool: ToolConfig,
-    uploaded_meshes: List[MeshInfo],
+    uploaded_meshes: list[MeshInfo],
     on_delete: Callable[[], None],
     can_delete: bool = True,
 ) -> None:
