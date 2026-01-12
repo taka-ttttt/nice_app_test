@@ -8,12 +8,7 @@ from collections.abc import Callable
 
 from nicegui import ui
 
-from core.config import (
-    MeshInfo,
-    MotionDirection,
-    MotionType,
-    ToolConfig,
-)
+from state import MeshInfo, MotionDirection, MotionType, ToolConfig
 
 
 def render_tool_card(

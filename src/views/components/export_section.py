@@ -6,7 +6,7 @@
 
 from nicegui import ui
 
-from core.config import AnalysisConfig
+from state import AnalysisConfig
 
 
 def render_export_section(state: AnalysisConfig) -> None:

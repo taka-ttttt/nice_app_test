@@ -6,11 +6,7 @@
 
 from nicegui import ui
 
-from core.config import (
-    AnalysisConfig,
-    ProcessType,
-    StepConfig,
-)
+from state import AnalysisConfig, ProcessType, StepConfig
 
 from .tool_card import render_tool_card
 from .workpiece_card import render_workpiece_card

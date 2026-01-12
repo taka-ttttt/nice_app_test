@@ -57,7 +57,7 @@ fixable = ["ALL"]
 "__init__.py" = ["F401"]  # 再エクスポート用
 
 [tool.ruff.lint.isort]
-known-first-party = ["core", "views"]
+known-first-party = ["core", "state", "views"]
 lines-after-imports = 2
 
 [tool.ruff.format]
