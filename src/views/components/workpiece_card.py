@@ -8,7 +8,7 @@ from collections.abc import Callable
 
 from nicegui import ui
 
-from core.config import MATERIAL_PRESETS, MeshInfo, WorkpieceConfig
+from state import MATERIAL_PRESETS, MeshInfo, WorkpieceConfig
 
 
 def render_workpiece_card(

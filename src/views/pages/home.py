@@ -11,13 +11,8 @@
 
 from nicegui import events, ui
 
-from core.config import (
-    AnalysisConfig,
-    AnalysisPurpose,
-    MeshInfo,
-    ProcessType,
-)
 from core.kfile_parser import parse_kfile_from_bytes
+from state import AnalysisConfig, AnalysisPurpose, MeshInfo, ProcessType
 from views.components import (
     render_export_section,
     render_global_settings,

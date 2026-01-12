@@ -6,7 +6,7 @@
 
 from nicegui import ui
 
-from core.config import (
+from state import (
     AnalysisConfig,
     ConstraintConfig,
     FrictionMode,
@@ -138,20 +138,15 @@ def render_symmetry_settings(state: AnalysisConfig) -> None:
 
     def add_symmetry_plane() -> None:
         """対称面を追加"""
-        if len(state.symmetry_planes) >= 2:
+        result = state.add_symmetry_plane()
+        if result is None:
             ui.notify("対称面は最大2つまでです", type="warning")
             return
-        plane = SymmetryPlane(
-            plane=SymmetryPlaneType.YZ,
-            coordinate=0.0,
-        )
-        state.symmetry_planes.append(plane)
         refresh_symmetry_planes()
 
     def remove_symmetry_plane(plane: SymmetryPlane) -> None:
         """対称面を削除"""
-        if plane in state.symmetry_planes:
-            state.symmetry_planes.remove(plane)
+        state.remove_symmetry_plane(plane.id)
         refresh_symmetry_planes()
 
     def refresh_symmetry_planes() -> None:
@@ -241,16 +236,13 @@ def render_constraint_settings(state: AnalysisConfig) -> None:
 
     def add_constraint() -> None:
         """拘束条件を追加"""
-        constraint = ConstraintConfig.create(
-            name=f"拘束条件 {len(state.constraints) + 1}"
-        )
-        state.constraints.append(constraint)
+        state.add_constraint()
         refresh_constraints()
         ui.notify("拘束条件を追加しました")
 
     def remove_constraint(constraint: ConstraintConfig) -> None:
         """拘束条件を削除"""
-        state.constraints = [c for c in state.constraints if c.id != constraint.id]
+        state.remove_constraint(constraint.id)
         refresh_constraints()
 
     def refresh_constraints() -> None:
