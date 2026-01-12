@@ -12,10 +12,9 @@ from .workpiece_card import render_workpiece_card
 
 
 __all__ = [
-    'render_workpiece_card',
-    'render_tool_card',
-    'render_step_manager',
-    'render_global_settings',
-    'render_export_section',
+    "render_workpiece_card",
+    "render_tool_card",
+    "render_step_manager",
+    "render_global_settings",
+    "render_export_section",
 ]
-

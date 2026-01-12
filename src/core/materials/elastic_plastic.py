@@ -1,4 +1,5 @@
 """弾塑性材料の定義"""
+
 from ansys.dyna.core import keywords as kwd
 
 
@@ -39,4 +40,3 @@ c5210_eh_mat024 = kwd.Mat024(
     lcss=201,
 )
 c5210_eh_mat024.title = "c5210_eh_mat024"
-
