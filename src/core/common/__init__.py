@@ -2,10 +2,11 @@
 
 from .direction import (
     Axis,
-    Sign,
     Direction,
     Directions,
+    Sign,
 )
+
 
 __all__ = [
     # Direction
