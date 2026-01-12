@@ -19,3 +19,46 @@ dev = [
     "pytest>=9.0.2",
     "ruff>=0.14.10",
 ]
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "*.pyc",
+    "upload",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+]
+
+ignore = [
+    "E501",  # 行が長すぎる（formatが処理）
+    "N802",  # 関数名が小文字でない（LS-DYNAのAPIに合わせる場合）
+    "N803",  # 引数名が小文字でない（同上）
+]
+
+fixable = ["ALL"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # 再エクスポート用
+
+[tool.ruff.lint.isort]
+known-first-party = ["core", "views"]
+lines-after-imports = 2
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
