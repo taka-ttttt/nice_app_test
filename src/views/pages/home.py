@@ -9,15 +9,22 @@
 5. エクスポート
 """
 
+import uuid
+from pathlib import Path
+
 from nicegui import events, ui
 
-from core.kfile_parser import parse_kfile_from_bytes
-from state import AnalysisConfig, AnalysisPurpose, MeshInfo, ProcessType
+from state import AnalysisConfig, AnalysisPurpose, MeshInfo
 from views.components import (
     render_export_section,
     render_global_settings,
     render_step_manager,
 )
+
+
+# アップロードファイルの保存先
+UPLOAD_DIR = Path("upload")
+UPLOAD_DIR.mkdir(exist_ok=True)
 
 
 # =============================================================================
@@ -63,13 +70,13 @@ def render_analysis_overview() -> None:
             ).classes("w-64")
 
             # 加工分類
-            process_options = {pt: pt.display_name for pt in ProcessType}
-            ui.select(
-                label="加工分類",
-                options=process_options,
-                value=state.process_type,
-                on_change=lambda e: setattr(state, "process_type", e.value),
-            ).classes("w-48")
+            # process_options = {pt: pt.display_name for pt in ProcessType}
+            # ui.select(
+            #     label="加工分類",
+            #     options=process_options,
+            #     value=state.process_type,
+            #     on_change=lambda e: setattr(state, "process_type", e.value),
+            # ).classes("w-48")
 
             # 解析目的
             purpose_options = {ap: ap.display_name for ap in AnalysisPurpose}
@@ -88,38 +95,30 @@ def render_mesh_management() -> None:
     # メッシュリストのコンテナ（動的更新用）
     mesh_list_container = None
 
-    def handle_upload(e: events.UploadEventArguments) -> None:
+    async def handle_upload(e: events.UploadEventArguments) -> None:
         """ファイルアップロード処理"""
         try:
-            # ファイル内容を読み取り
-            content = e.content.read()
-            file_name = e.name
+            # ファイルを一時保存
+            file_id = str(uuid.uuid4())
+            original_filename = e.file.name
+            file_path = UPLOAD_DIR / f"{file_id}_{original_filename}"
+            await e.file.save(file_path)
 
-            # kファイルを解析
-            parts, has_shared = parse_kfile_from_bytes(content, file_name)
+            # state に解析を委譲
+            meshes = state.add_meshes_from_file(
+                file_path=str(file_path), original_filename=original_filename
+            )
 
-            if not parts:
+            if not meshes:
                 ui.notify(
-                    f"{file_name}: パート情報が見つかりませんでした", type="warning"
+                    f"{original_filename}: パート情報が見つかりませんでした",
+                    type="warning",
                 )
                 return
 
-            # パートごとにMeshInfoを作成
-            for part in parts:
-                mesh = MeshInfo.create(
-                    file_name=file_name,
-                    file_path="",  # サーバー保存は後で実装
-                    part_id=part.part_id,
-                    part_name=part.part_name,
-                    element_count=part.element_count,
-                    node_count=part.node_count,
-                    element_type=part.element_type,
-                    has_shared_nodes=has_shared,
-                )
-                state.uploaded_meshes.append(mesh)
-
             ui.notify(
-                f"{file_name}: {len(parts)}個のパートを読み込みました", type="positive"
+                f"{original_filename}: {len(meshes)}個のパートを読み込みました",
+                type="positive",
             )
 
             # メッシュリストを更新
@@ -130,8 +129,10 @@ def render_mesh_management() -> None:
 
     def delete_mesh(mesh_id: str) -> None:
         """メッシュを削除"""
-        state.uploaded_meshes = [m for m in state.uploaded_meshes if m.id != mesh_id]
-        ui.notify("メッシュを削除しました")
+        if state.remove_mesh(mesh_id):
+            ui.notify("メッシュを削除しました")
+        else:
+            ui.notify("メッシュの削除に失敗しました", type="warning")
         refresh_mesh_list()
 
     def get_mesh_usage_status(mesh_id: str) -> str:

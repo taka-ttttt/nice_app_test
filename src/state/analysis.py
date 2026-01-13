@@ -144,6 +144,36 @@ class AnalysisConfig:
                 return mesh
         return None
 
+    def remove_mesh(self, mesh_id: str) -> bool:
+        """
+        メッシュを削除（ファイルも削除）
+
+        Args:
+            mesh_id: 削除するメッシュのID
+
+        Returns:
+            削除に成功した場合True
+        """
+        from pathlib import Path
+
+        mesh = self.get_mesh_by_id(mesh_id)
+        if not mesh:
+            return False
+
+        # ファイルを削除
+        if mesh.file_path:
+            file_path = Path(mesh.file_path)
+            if file_path.exists():
+                try:
+                    file_path.unlink()
+                except OSError:
+                    # ファイル削除に失敗しても処理は続行
+                    pass
+
+        # メッシュリストから削除
+        self.uploaded_meshes = [m for m in self.uploaded_meshes if m.id != mesh_id]
+        return True
+
     def get_mesh_usage(self, mesh_id: str) -> list[tuple[StepConfig, str, str]]:
         """
         メッシュの全ての使用箇所を取得。
@@ -159,6 +189,45 @@ class AnalysisConfig:
                 if tool.mesh_id == mesh_id:
                     usages.append((step, "tool", tool.name))
         return usages
+
+    def add_meshes_from_file(
+        self,
+        file_path: str,
+        original_filename: str,
+    ) -> list[MeshInfo]:
+        """
+        ファイルからメッシュを解析して追加
+
+        Args:
+            file_path: 保存されたファイルのパス
+            original_filename: オリジナルのファイル名
+
+        Returns:
+            追加されたMeshInfoのリスト
+        """
+        from core.mesh_part_extractor import extract_parts_from_mesh
+
+        # core の解析機能を使用
+        parts, has_shared = extract_parts_from_mesh(file_path)
+
+        if not parts:
+            return []
+
+        meshes = []
+        for part in parts:
+            mesh = MeshInfo.create(
+                file_name=original_filename,
+                file_path=file_path,
+                part_id=part.part_id,
+                part_name=part.part_name,
+                element_count=part.element_count,
+                element_type=part.element_type,
+                has_shared_nodes=has_shared,
+            )
+            self.uploaded_meshes.append(mesh)
+            meshes.append(mesh)
+
+        return meshes
 
     def add_symmetry_plane(
         self,
