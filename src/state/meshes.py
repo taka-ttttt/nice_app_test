@@ -14,7 +14,6 @@ class MeshInfo:
     part_id: int  # *PARTで定義されたパートID
     part_name: str  # *PARTのタイトル
     element_count: int  # 要素数
-    node_count: int  # 節点数
     element_type: str = "SHELL"  # 要素タイプ (SHELL/SOLID)
     has_shared_nodes: bool = False  # 他パートと節点を共有しているか
 
@@ -26,7 +25,6 @@ class MeshInfo:
         part_id: int,
         part_name: str,
         element_count: int,
-        node_count: int,
         element_type: str = "SHELL",
         has_shared_nodes: bool = False,
     ) -> "MeshInfo":
@@ -38,7 +36,6 @@ class MeshInfo:
             part_id=part_id,
             part_name=part_name,
             element_count=element_count,
-            node_count=node_count,
             element_type=element_type,
             has_shared_nodes=has_shared_nodes,
         )
