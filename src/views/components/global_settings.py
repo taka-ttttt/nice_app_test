@@ -44,7 +44,6 @@ def render_friction_settings(state: AnalysisConfig) -> None:
     def update_friction_mode(mode: FrictionMode) -> None:
         """摩擦モードを更新"""
         state.friction.mode = mode
-        state.friction.apply_preset()
         refresh_manual_inputs()
 
     def refresh_manual_inputs() -> None:
