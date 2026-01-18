@@ -4,8 +4,11 @@
 エクスポートセクションのUIを提供します。
 """
 
+from pathlib import Path
+
 from nicegui import ui
 
+from services.export_service import ExportService
 from state import AnalysisConfig
 
 
@@ -19,9 +22,17 @@ def render_export_section(state: AnalysisConfig) -> None:
 
     def handle_export() -> None:
         """エクスポートボタンのハンドラ"""
-        # TODO: 実際のエクスポート処理は後で実装
-        filename = state.get_export_filename()
-        ui.notify(f"エクスポート: {filename}", type="info")
+        try:
+            # プロジェクトディレクトリをベースにする（本来は設定ファイルなどで管理）
+            base_output_dir = Path("output")
+
+            # Service層を通じてエクスポート実行
+            output_path = ExportService.export_analysis_deck(state, base_output_dir)
+
+            ui.notify(f"エクスポート完了: {output_path}", type="positive")
+
+        except Exception as e:
+            ui.notify(f"エクスポートエラー: {str(e)}", type="negative")
 
     with ui.card().classes("w-full"):
         ui.label("5. エクスポート").classes("text-lg font-bold mb-4")
