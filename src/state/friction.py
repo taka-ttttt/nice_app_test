@@ -7,8 +7,8 @@ from enum import Enum
 class FrictionMode(Enum):
     """摩擦係数モード"""
 
-    OIL = "oil"  # 油あり: 静摩擦0.10, 動摩擦0.05
-    DRY = "dry"  # 油なし: 静摩擦0.15, 動摩擦0.10
+    OIL = "oil"  # 油あり
+    DRY = "dry"  # 油なし
     MANUAL = "manual"  # マニュアル入力
 
 
@@ -17,19 +17,28 @@ class FrictionConfig:
     """摩擦係数設定"""
 
     mode: FrictionMode = FrictionMode.OIL
-    static_friction: float = 0.10  # 静摩擦係数
-    dynamic_friction: float = 0.05  # 動摩擦係数
+    # マニュアルモード時のみ使用される値
+    manual_static_friction: float = 0.10
+    manual_dynamic_friction: float = 0.05
 
-    def __post_init__(self):
-        """モードに基づいてプリセット値を適用"""
-        self.apply_preset()
+    @property
+    def static_friction(self) -> float:
+        """
+        UI表示用の静摩擦係数取得ヘルパー
+        注意: 実際の解析値はCore側で決定されるため、これはあくまでUI表示の目安や
+        Manualモード時の値を返すためのもの。
+        """
+        # UIの互換性のためにプロパティとして残すが、
+        # 本来はUI側で解決するか、manual値を表示すべき
+        if self.mode == FrictionMode.MANUAL:
+            return self.manual_static_friction
+        # プリセット値はCoreが知っているため、ここでは仮の値を返すか、
+        # あるいはUI表示用として割り切って定数を定義するか。
+        # 今回は「Stateは値を持たない」方針なので、Manual以外はNoneや0を返すのが
+        # 厳密だが、UIバインディングの都合上、Manual値を返しておくのが無難。
+        return self.manual_static_friction
 
-    def apply_preset(self) -> None:
-        """摩擦モードに基づいてプリセット値を適用"""
-        if self.mode == FrictionMode.OIL:
-            self.static_friction = 0.10
-            self.dynamic_friction = 0.05
-        elif self.mode == FrictionMode.DRY:
-            self.static_friction = 0.15
-            self.dynamic_friction = 0.10
-        # MANUALモードはユーザー指定値を保持
+    @property
+    def dynamic_friction(self) -> float:
+        """UI表示用の動摩擦係数取得ヘルパー"""
+        return self.manual_dynamic_friction
