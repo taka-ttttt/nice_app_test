@@ -12,5 +12,6 @@ wheels/
 # data
 data/
 
-# uploaded files
+# input and output files
 upload/
+output/
