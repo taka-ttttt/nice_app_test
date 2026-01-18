@@ -7,6 +7,141 @@ from typing import Any
 from ansys.dyna.core import Deck
 from ansys.dyna.core import keywords as kwd
 
+from core.contacts.generator import ContactGenerator
+from core.materials.generator import MaterialGenerator
+from core.materials.sscurve_loader import SSCurveLoader
+
+# 循環参照を防ぐため、TYPE_CHECKINGを使用するか、この時点ではAnalysisConfigをインポートしない
+# 実行時に渡されるオブジェクトがAnalysisConfigであることを想定
+from state import AnalysisConfig
+
+
+class DeckGenerator:
+    """解析デック生成クラス"""
+
+    def __init__(self, output_dir: str):
+        self.output_dir = output_dir
+        self._cid_counter = 1
+        self._mid_counter = 1
+        self._lcid_counter = 1  # Load Curve ID用カウンタ（必要に応じて）
+
+    def generate(self, config: AnalysisConfig) -> str:
+        """
+        設定(AnalysisConfig)から.kファイルを生成して保存する
+
+        Args:
+            config: 解析設定
+
+        Returns:
+            生成されたメインファイルのパス
+        """
+        # Configからキーワードグループへの変換
+        # TODO: 各Generatorを使用して適切なキーワードを生成する
+        # 現時点では、アーキテクチャ疎通のために最小限のダミー/デフォルトキーワードを設定
+
+        keyword_groups: dict[str, list[Any]] = {
+            "control_keywords": [],
+            "section_keywords": [],
+            "material_keywords": [],  # 材料定義（カーブ+材料を含む）
+            "part_keywords": [],
+            "boundary_keywords": [],
+            "contact_keywords": [],
+            "database_keywords": [],
+            # スプリングバック用（空リスト）
+            "sb_control_keywords": [],
+            "sb_part_keywords": [],
+            "sb_mesh_keywords": [],
+            "sb_boundary_keywords": [],
+            "sb_database_keywords": [],
+        }
+
+        # CONTROLキーワードの生成（例）
+        term = kwd.ControlTermination(endtim=100.0)
+        keyword_groups["control_keywords"].append(term)
+
+        # 材料定義の生成（カーブ+材料）
+        self._generate_materials(config, keyword_groups["material_keywords"])
+
+        # 接触条件の生成
+        self._generate_contacts(config, keyword_groups["contact_keywords"])
+
+        # ファイル生成の実行
+        # 既存の関数ロジックを再利用
+        results = create_comprehensive_deck_files(
+            keyword_groups=keyword_groups,
+            project_name=config.output_filename or config.project_name,
+            add_timestamp=True,  # タイムスタンプを付けて上書き防止
+            base_dir=self.output_dir,
+            create_springback=False,  # 今回はメイン解析のみ
+        )
+
+        return results["press_analysis"]["main_file"]
+
+    def _generate_contacts(
+        self, config: AnalysisConfig, contact_keywords: list[Any]
+    ) -> None:
+        """接触定義の生成"""
+        # プロジェクト全体で一括の接触定義を行う（仮: 全パーツ対象）
+        # 将来的にはPart IDの管理クラスから適切なIDを取得して設定する
+
+        # 例: Part ID 0 はLS-DYNAでは通常「すべて」を意味しないが、
+        # ContactAutomaticSurfaceToSurfaceのデフォルト挙動や
+        # ユーザー定義のSet IDなどを使用する。
+        # ここではアーキテクチャ検証のため、ダミーIDを使用。
+        master_id = 1
+        slave_id = 2
+
+        contact = ContactGenerator.generate(
+            cid=self._cid_counter,
+            heading="Master Contact",
+            part_a_id=master_id,
+            part_b_id=slave_id,
+            config=config.friction,
+        )
+        contact_keywords.append(contact)
+        self._cid_counter += 1
+
+    def _generate_materials(
+        self, config: AnalysisConfig, material_keywords: list[Any]
+    ) -> None:
+        """材料定義の生成（応力-ひずみカーブ + 材料特性）"""
+        # 全工程のWorkpieceから使用されている材料を収集
+        # 重複を排除して一度だけ定義する
+        material_map: dict[
+            str, tuple[str, Any]
+        ] = {}  # key: preset_key, value: (preset_key, custom_material)
+        lcss_set: set[int] = set()
+
+        for step in config.steps:
+            for workpiece in step.workpieces:
+                preset_key = workpiece.material_preset
+                if preset_key not in material_map:
+                    material_map[preset_key] = (preset_key, workpiece.custom_material)
+
+                # 材料設定を取得してlcssを抽出
+                material = workpiece.get_material()
+                lcss_set.add(material.lcss)
+
+        # 1. 応力-ひずみカーブの生成（材料より先に定義する必要がある）
+        for lcss in sorted(lcss_set):  # IDの小さい順に生成
+            try:
+                curve_keyword = SSCurveLoader.generate_from_lcss(lcss)
+                material_keywords.append(curve_keyword)
+            except (ValueError, FileNotFoundError) as e:
+                # カーブファイルが見つからない場合の警告
+                # 実運用ではログに記録するか、ユーザーに通知
+                print(f"Warning: Failed to generate curve for lcss={lcss}: {e}")
+
+        # 2. 材料特性の生成
+        for key, custom_mat in material_map.values():
+            mat_keyword = MaterialGenerator.generate(
+                mid=self._mid_counter,
+                preset_key=key,
+                custom_material=custom_mat,
+            )
+            material_keywords.append(mat_keyword)
+            self._mid_counter += 1
+
 
 def reset_keywords(all_keywords: list[Any]) -> None:
     """キーワードのdeck参照をリセット
@@ -33,20 +168,6 @@ def create_comprehensive_deck_files(
 
     Args:
         keyword_groups: キーワードグループの辞書
-            {
-                'section_keywords': [...],
-                'material_keywords': [...],
-                'part_keywords': [...],
-                'boundary_keywords': [...],
-                'contact_keywords': [...],
-                'control_keywords': [...],
-                'database_keywords': [...],
-                'sb_control_keywords': [...],
-                'sb_part_keywords': [...],
-                'sb_mesh_keywords': [...],
-                'sb_boundary_keywords': [...],
-                'sb_database_keywords': [...]
-            }
         project_name: プロジェクト名
         add_timestamp: タイムスタンプを追加するかどうか
         base_dir: ベースディレクトリ
@@ -58,20 +179,9 @@ def create_comprehensive_deck_files(
     """
 
     if reset_before_create:
-        all_keywords = (
-            keyword_groups["section_keywords"]
-            + keyword_groups["material_keywords"]
-            + keyword_groups["part_keywords"]
-            + keyword_groups["boundary_keywords"]
-            + keyword_groups["contact_keywords"]
-            + keyword_groups["control_keywords"]
-            + keyword_groups["database_keywords"]
-            + keyword_groups["sb_control_keywords"]
-            + keyword_groups["sb_part_keywords"]
-            + keyword_groups["sb_mesh_keywords"]
-            + keyword_groups["sb_boundary_keywords"]
-            + keyword_groups["sb_database_keywords"]
-        )
+        all_keywords = []
+        for group in keyword_groups.values():
+            all_keywords.extend(group)
         reset_keywords(all_keywords)
 
     # タイムスタンプ生成
@@ -135,49 +245,49 @@ def create_press_analysis_project(
             "number": "01",
             "name": "controls",
             "title": "Control Parameters",
-            "keywords": keyword_groups["control_keywords"],
+            "keywords": keyword_groups.get("control_keywords", []),
             "description": "Basic control settings (accuracy, time step, termination, etc.)",
         },
         {
             "number": "02",
             "name": "sections",
             "title": "Section Definitions",
-            "keywords": keyword_groups["section_keywords"],
+            "keywords": keyword_groups.get("section_keywords", []),
             "description": "Element section definitions (shell, solid, etc.)",
         },
         {
             "number": "03",
             "name": "materials",
             "title": "Material Definitions",
-            "keywords": keyword_groups["material_keywords"],
-            "description": "Material models and properties",
+            "keywords": keyword_groups.get("material_keywords", []),
+            "description": "Material curves (stress-strain) and material properties",
         },
         {
             "number": "04",
             "name": "parts",
             "title": "Part Definitions",
-            "keywords": keyword_groups["part_keywords"],
+            "keywords": keyword_groups.get("part_keywords", []),
             "description": "Part definitions and sets",
         },
         {
             "number": "05",
             "name": "boundaries",
             "title": "Boundary Conditions",
-            "keywords": keyword_groups["boundary_keywords"],
+            "keywords": keyword_groups.get("boundary_keywords", []),
             "description": "Loads, constraints, and prescribed motions",
         },
         {
             "number": "06",
             "name": "contacts",
             "title": "Contact Definitions",
-            "keywords": keyword_groups["contact_keywords"],
+            "keywords": keyword_groups.get("contact_keywords", []),
             "description": "Contact interfaces and friction",
         },
         {
             "number": "07",
             "name": "outputs",
             "title": "Output Settings",
-            "keywords": keyword_groups["database_keywords"],
+            "keywords": keyword_groups.get("database_keywords", []),
             "description": "Database output definitions",
         },
     ]
@@ -212,7 +322,7 @@ def create_springback_analysis_project(
             "number": "01",
             "name": "controls",
             "title": "Implicit Control Parameters",
-            "keywords": keyword_groups["sb_control_keywords"],
+            "keywords": keyword_groups.get("sb_control_keywords", []),
             "description": "Implicit solver control settings",
         },
         {
@@ -237,21 +347,21 @@ def create_springback_analysis_project(
             "number": "04",
             "name": "parts",
             "title": "Part Definitions",
-            "keywords": keyword_groups["sb_part_keywords"],
+            "keywords": keyword_groups.get("sb_part_keywords", []),
             "description": "Work piece definition for springback",
         },
         {
             "number": "05",
             "name": "boundaries",
             "title": "Boundary Conditions",
-            "keywords": keyword_groups["sb_boundary_keywords"],
+            "keywords": keyword_groups.get("sb_boundary_keywords", []),
             "description": "Springback boundary conditions",
         },
         {
             "number": "06",
             "name": "outputs",
             "title": "Output Settings",
-            "keywords": keyword_groups["sb_database_keywords"],
+            "keywords": keyword_groups.get("sb_database_keywords", []),
             "description": "Database output and dynain input",
         },
     ]
